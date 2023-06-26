@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 /*In This script w need to Import "SAKILA" databases from this link :
  https://dev.mysql.com/doc/index-other.html
 
@@ -335,5 +334,3 @@ SELECT
 FROM Double_Addresses
 JOIN Country_City
     ON Double_Addresses.city = Country_City.city;
-
->>>>>>> 5f5875249408ea1269ed5963cbaf35f411a3267e
