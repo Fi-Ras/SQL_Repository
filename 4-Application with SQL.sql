@@ -393,4 +393,45 @@ CREATE VIEW view_students_leftjoin AS
 SELECT * FROM view_students_leftjoin;
 
 
+-- --------------------------------------------------------
+-- #16 Create a view to retrieve all tables with the INNER JOIN clause
+-- --------------------------------------------------------
+-- Same result as the equijoin with the WHERE clause
+CREATE VIEW view_students_innerjoin AS
+	SELECT 
+		s.id 		as 'student_id',
+		s.name		as 'student_name',
+		s.first_name	as 'student_firstname',
+		s.age		as 'student_age',
+		a.id		as 'address_id',
+		a.address	as 'address_address',
+		a.city 		as 'address_city',
+		a.postal_code 	as 'address_zipcode',
+		a.student 	as 'address_student',
+		n.id		as 'note_id',
+		n.student	as 'note_student',
+		n.grade		as 'note_grade',
+		n.subject	as 'note_subject',
+		sg.id		as 'subject_grade_id',
+		sg.title	as 'subject_grade_title',
+		p.id		as 'phone_id',
+		p.number	as 'phone_number',
+		p.type		as 'phone_type',
+		p.student	as 'phone_student',
+		pt.id		as 'phone_type_id',
+		pt.label	as 'phone_type_label'
+	FROM
+		students s
+		INNER JOIN addresses a
+			ON s.id = a.student		-- Join students and addresses tables
+		INNER JOIN notes n
+			ON s.id = n.student		-- Join students and notes tables
+		INNER JOIN phones p
+			ON s.id = p.student		-- Join students and phones tables
+		INNER JOIN subject_grades sg
+			ON n.subject = sg.id		-- Join notes and subject_grades tables
+		INNER JOIN phone_types pt
+			ON p.type = pt.id		-- Join phones and phone_types tables	
+	;
 
+SELECT * FROM view_students_innerjoin;
