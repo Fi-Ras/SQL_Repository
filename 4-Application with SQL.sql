@@ -2,6 +2,8 @@
 -- # 1- View databases
 -- --------------------------------------------------------
 SHOW DATABASES;
+DROP DATABASE MSIGD; -- Delete a database
+DROP DATABASE MISIGD; -- Delete a database
 
 -- --------------------------------------------------------
 -- #2 Create the "MSIGD" database
@@ -316,12 +318,12 @@ CREATE VIEW view_students_where AS
 		a.city 	as 'address_city',
 		a.postal_code as 'address_zipcode',
 		a.student 	as 'address_student',
-		g.id		as 'grade_id',
-		g.student	as 'grade_student',
-		g.grade		as 'grade_grade',
-		g.subject	as 'grade_subject',
-		sm.id		as 'subjects_matter_id',
-		sm.title	as 'subjects_matter_title',
+		n.id		as 'note_id',
+		n.student	as 'note_student',
+		n.grade		as 'note_grade',
+		n.subject	as 'note_subject',
+		sg.id		as 'subject_grade_id',
+		sg.title	as 'subject_grade_title',
 		p.id		as 'phone_id',
 		p.number	as 'phone_number',
 		p.type		as 'phone_type',
@@ -332,16 +334,21 @@ CREATE VIEW view_students_where AS
 		students s
 		JOIN addresses a
 			ON s.id = a.student		-- Join students and addresses tables
-		JOIN grades g
-			ON s.id = g.student		-- Join students and grades tables
-		JOIN subjects_matter sm
-			ON g.subject = sm.id	-- Join grades and subjects_matter tables
+		JOIN notes n
+			ON s.id = n.student		-- Join students and notes tables
+		JOIN subject_grades sg
+			ON n.subject = sg.id	-- Join notes and subject_grades tables
 		JOIN phones p
 			ON s.id = p.student		-- Join students and phones tables
 		JOIN phone_types pt
 			ON p.type = pt.id		-- Join phones and phone_types tables
 	;
 
+SELECT * FROM view_students_where;
+-- --------------------------------------------------------
+-- #15 Create a view to retrieve all tables with LEFT JOIN clause
+-- --------------------------------------------------------
+-- The view returns NULL results for empty tables 
 -- --------------------------------------------------------
 -- #15 Create a view to retrieve all tables with LEFT JOIN clause
 -- --------------------------------------------------------
@@ -350,19 +357,19 @@ CREATE VIEW view_students_leftjoin AS
 	SELECT 
 		s.id 		as 'student_id',
 		s.name		as 'student_name',
-		s.firstname	as 'student_firstname',
+		s.first_name	as 'student_firstname',
 		s.age		as 'student_age',
 		a.id		as 'address_id',
 		a.address	as 'address_address',
 		a.city 		as 'address_city',
-		a.zipcode 	as 'address_zipcode',
+		a.postal_code 	as 'address_zipcode',
 		a.student 	as 'address_student',
-		g.id		as 'grade_id',
-		g.student	as 'grade_student',
-		g.grade		as 'grade_grade',
-		g.subject	as 'grade_subject',
-		sm.id		as 'subjects_matter_id',
-		sm.title	as 'subjects_matter_title',
+		n.id		as 'note_id',
+		n.student	as 'note_student',
+		n.grade		as 'note_grade',
+		n.subject	as 'note_subject',
+		sg.id		as 'subject_grade_id',
+		sg.title	as 'subject_grade_title',
 		p.id		as 'phone_id',
 		p.number	as 'phone_number',
 		p.type		as 'phone_type',
@@ -373,12 +380,17 @@ CREATE VIEW view_students_leftjoin AS
 		students s
 		LEFT JOIN addresses a
 			ON s.id = a.student		-- Join students and addresses tables
-		LEFT JOIN grades g
-			ON s.id = g.student		-- Join students and grades tables	
+		LEFT JOIN notes n
+			ON s.id = n.student		-- Join students and notes tables	
 		LEFT JOIN phones p
 			ON s.id = p.student		-- Join students and phones tables
-		LEFT JOIN subjects_matter sm
-			ON g.subject = sm.id		-- Join grades and subjects_matter tables
+		LEFT JOIN subject_grades sg
+			ON n.subject = sg.id		-- Join notes and subject_grades tables
 		LEFT JOIN phone_types pt
 			ON p.type = pt.id			-- Join phones and phone_types tables	
 	;
+
+SELECT * FROM view_students_leftjoin;
+
+
+
