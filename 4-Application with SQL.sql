@@ -305,45 +305,80 @@ WHERE
 -- It's not possible to use SELECT * because it will result in column name duplication (e.g., column "id").
 -- The view returns no results for empty tables. The WHERE clause enforces the equijoin.
 
--- --------------------------------------------------------
--- #14 Create a view to retrieve all tables with the WHERE clause
--- --------------------------------------------------------
--- It's not possible to use SELECT * because it will result in column name duplication (e.g., column "id").
--- The view returns no results for empty tables. The WHERE clause enforces the equijoin.
-
-CREATE VIEW vue_etudiants_where AS
+CREATE VIEW view_students_where AS
 	SELECT 
-		e.id 		as 'etudiant_id',
-		e.name		as 'etudiant_nom',
-		e.first_name	as 'etudiant_prenom',
-		e.age		as 'etudiant_age',
-		a.id		as 'adresse_id',
-		a.address	as 'adresse_adresse',
-		a.city 	as 'adresse_ville',
-		a.postal_code as 'adresse_codepostal',
-		a.student 	as 'adresse_etudiant',
-		n.id		as 'note_id',
-		n.student	as 'note_etudiant',
-		n.grade		as 'note_note',
-		n.subject	as 'note_matiere',
-		nm.id		as 'notes_matiere_id',
-		nm.title	as 'notes_matiere_titre',
-		t.id		as 'telephone_id',
-		t.number	as 'telephone_numero',
-		t.type		as 'telephone_type',
-		t.student	as 'telephone_etudiant',
-		tt.id		as 'telephone_type_id',
-		tt.label	as 'telephone_type_libelle'
+		s.id 		as 'student_id',
+		s.name		as 'student_name',
+		s.first_name	as 'student_firstname',
+		s.age		as 'student_age',
+		a.id		as 'address_id',
+		a.address	as 'address_address',
+		a.city 	as 'address_city',
+		a.postal_code as 'address_zipcode',
+		a.student 	as 'address_student',
+		g.id		as 'grade_id',
+		g.student	as 'grade_student',
+		g.grade		as 'grade_grade',
+		g.subject	as 'grade_subject',
+		sm.id		as 'subjects_matter_id',
+		sm.title	as 'subjects_matter_title',
+		p.id		as 'phone_id',
+		p.number	as 'phone_number',
+		p.type		as 'phone_type',
+		p.student	as 'phone_student',
+		pt.id		as 'phone_type_id',
+		pt.label	as 'phone_type_label'
 	FROM
-		students e
+		students s
 		JOIN addresses a
-			ON e.id = a.student		-- Join students and addresses tables
-		JOIN notes n
-			ON e.id = n.student		-- Join students and notes tables
-		JOIN subject_grades nm
-			ON n.subject = nm.id	-- Join notes and subject_grades tables
-		JOIN phones t
-			ON e.id = t.student		-- Join students and phones tables
-		JOIN phone_types tt
-			ON t.type = tt.id		-- Join phones and phone_types tables
+			ON s.id = a.student		-- Join students and addresses tables
+		JOIN grades g
+			ON s.id = g.student		-- Join students and grades tables
+		JOIN subjects_matter sm
+			ON g.subject = sm.id	-- Join grades and subjects_matter tables
+		JOIN phones p
+			ON s.id = p.student		-- Join students and phones tables
+		JOIN phone_types pt
+			ON p.type = pt.id		-- Join phones and phone_types tables
+	;
+
+-- --------------------------------------------------------
+-- #15 Create a view to retrieve all tables with LEFT JOIN clause
+-- --------------------------------------------------------
+-- The view returns NULL results for empty tables 
+CREATE VIEW view_students_leftjoin AS
+	SELECT 
+		s.id 		as 'student_id',
+		s.name		as 'student_name',
+		s.firstname	as 'student_firstname',
+		s.age		as 'student_age',
+		a.id		as 'address_id',
+		a.address	as 'address_address',
+		a.city 		as 'address_city',
+		a.zipcode 	as 'address_zipcode',
+		a.student 	as 'address_student',
+		g.id		as 'grade_id',
+		g.student	as 'grade_student',
+		g.grade		as 'grade_grade',
+		g.subject	as 'grade_subject',
+		sm.id		as 'subjects_matter_id',
+		sm.title	as 'subjects_matter_title',
+		p.id		as 'phone_id',
+		p.number	as 'phone_number',
+		p.type		as 'phone_type',
+		p.student	as 'phone_student',
+		pt.id		as 'phone_type_id',
+		pt.label	as 'phone_type_label'
+	FROM
+		students s
+		LEFT JOIN addresses a
+			ON s.id = a.student		-- Join students and addresses tables
+		LEFT JOIN grades g
+			ON s.id = g.student		-- Join students and grades tables	
+		LEFT JOIN phones p
+			ON s.id = p.student		-- Join students and phones tables
+		LEFT JOIN subjects_matter sm
+			ON g.subject = sm.id		-- Join grades and subjects_matter tables
+		LEFT JOIN phone_types pt
+			ON p.type = pt.id			-- Join phones and phone_types tables	
 	;
