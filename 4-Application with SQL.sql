@@ -218,50 +218,51 @@ SELECT
 (SELECT id FROM students WHERE name = 'BAZIN' AND first_name = 'Cyril'); -- column 3 student
 
 -- *** METHOD 2 Join ***
--- Join between the "etudiants" table and the "notes_matieres" table. This join may seem strange because there is no direct relationship between the "etudiants" and "notes_matieres" tables.
+-- Join between the students table and the subject_grades table. This join may seem strange because there is no direct relationship between the "students" and "subject_grades" tables.
 -- Edgar CODD: The grades "18", "18.5", and "15.5" in Maths
-show tables ;
+SHOW TABLES;
 INSERT INTO notes (student, grade, subject)
-SELECT e.id, '18', m.id 
+SELECT s.id, '18', sg.id 
 FROM students s, subject_grades sg				
 WHERE
 	s.name = 'CODD' AND s.first_name = 'Edgar'
-AND	m.titre = 'Maths';
+AND	sg.title = 'Maths';
 
 INSERT INTO notes (student, grade, subject)
-SELECT e.id, '18.5', m.id 
-FROM etudiants e, notes_matieres m
+SELECT s.id, '18.5', sg.id 
+FROM students s, subject_grades sg
 WHERE
-	e.nom = 'CODD' AND e.prenom = 'Edgar'
-AND	m.titre = 'Maths';
+	s.name = 'CODD' AND s.first_name = 'Edgar'
+AND	sg.title = 'Maths';
 
 INSERT INTO notes (student, grade, subject)
-SELECT e.id, '15.5', m.id 
-FROM etudiants e, notes_matieres m
+SELECT s.id, '15.5', sg.id 
+FROM students s, subject_grades sg
 WHERE
-	e.nom = 'CODD' AND e.prenom = 'Edgar'
-AND	m.titre = 'Maths';
+	s.name = 'CODD' AND s.first_name = 'Edgar'
+AND	sg.title = 'Maths';
+
 
 -- *** METHOD 3 Insert multiple rows with UNION ***
 -- Edgar CODD: The grades "5", "5.25", and "6" in French
 INSERT INTO notes (student, grade, subject)
-SELECT e.id, '5', m.id 							-- grade 5
-FROM etudiants e, notes_matieres m				
+SELECT s.id, '5', sg.id 							-- grade 5
+FROM students s, subject_grades sg				
 WHERE
-	e.nom = 'CODD' AND e.prenom = 'Edgar'
-AND	m.titre = 'Francais'
+	s.name = 'CODD' AND s.first_name = 'Edgar'
+AND	sg.title = 'Francais'
 UNION
-SELECT e.id, '5.25', m.id 						-- grade 5.25
-FROM etudiants e, notes_matieres m				
+SELECT s.id, '5', sg.id 						-- grade 5.25
+FROM students s, subject_grades sg				
 WHERE
-	e.nom = 'CODD' AND e.prenom = 'Edgar'
-AND	m.titre = 'Francais'
+	s.name = 'CODD' AND s.first_name = 'Edgar'
+AND	sg.title = 'Francais'
 UNION
-SELECT e.id, '6', m.id 							-- grade 6
-FROM etudiants e, notes_matieres m				
+SELECT s.id, '6', sg.id 						-- grade 5.25
+FROM students s, subject_grades sg				
 WHERE
-	e.nom = 'CODD' AND e.prenom = 'Edgar'
-AND	m.titre = 'Francais';
+	s.name = 'CODD' AND s.first_name = 'Edgar'
+AND	sg.title = 'Francais';
 
 -- --------------------------------------------------------
 -- Differences between methods 1, 2, and 3:
@@ -276,210 +277,73 @@ AND	m.titre = 'Francais';
 --     => Result for 3 grades to insert: 1 INSERT and 3 SELECTs
 
 -- Marie CURIE: Grades "19", "20", and "20" in Math, and grades "19.5", "20", and "20" in French
-INSERT INTO notes (student, grade, subject) SELECT (SELECT id FROM etudiants WHERE last_name = 'CURIE' AND first_name = 'Marie'), (19), (SELECT id FROM notes_matieres WHERE title = 'Maths');
-INSERT INTO notes (student, grade, subject) SELECT (SELECT id FROM etudiants WHERE last_name = 'CURIE' AND first_name = 'Marie'), (20), (SELECT id FROM notes_matieres WHERE title = 'Maths');
-INSERT INTO notes (student, grade, subject) SELECT (SELECT id FROM etudiants WHERE last_name = 'CURIE' AND first_name = 'Marie'), (20), (SELECT id FROM notes_matieres WHERE title = 'Maths');
+INSERT INTO notes (student, grade, subject) SELECT (SELECT id FROM students WHERE name = 'CURIE' AND first_name = 'Marie'), (19), (SELECT id FROM subject_grades WHERE title = 'Math');
+INSERT INTO notes (student, grade, subject) SELECT (SELECT id FROM students WHERE name = 'CURIE' AND first_name = 'Marie'), (20), (SELECT id FROM subject_grades WHERE title = 'Math');
+INSERT INTO notes (student, grade, subject) SELECT (SELECT id FROM students WHERE name = 'CURIE' AND first_name = 'Marie'), (20), (SELECT id FROM subject_grades WHERE title = 'Math');
+INSERT INTO notes (student, grade, subject) SELECT (SELECT id FROM students WHERE name = 'CURIE' AND first_name = 'Marie'), (19.5), (SELECT id FROM subject_grades WHERE title = 'French');
+INSERT INTO notes (student, grade, subject) SELECT (SELECT id FROM students WHERE name = 'CURIE' AND first_name = 'Marie'), (20), (SELECT id FROM subject_grades WHERE title = 'French');
+INSERT INTO notes (student, grade, subject) SELECT (SELECT id FROM students WHERE name = 'CURIE' AND first_name = 'Marie'), (20), (SELECT id FROM subject_grades WHERE title = 'French');
 
 -- Pierre CURIE: 3 points less than Marie
 -- The purpose of this exercise is to demonstrate that it is possible to perform multiple joins on the same table. (Here, 2 joins on the same table "etudiants")
-INSERT INTO notes (etudiant, note, matiere)
+INSERT INTO notes (student, grade, subject)
 SELECT 
 	ePierre.id, 						-- Pierre's ID
-	n.note - 3, 						-- Mathematical expression: note - 3
-	n.matiere  
+	n.grade - 3, 						-- Mathematical expression: grade - 3
+	n.subject  
 FROM 
-	notes n, 							
-	etudiants eMarie, 					-- 1st Join with "etudiants" table to retrieve Marie's notes
-	etudiants ePierre 					-- 2nd Join with "etudiants" table to retrieve Pierre's ID
-WHERE 
-	eMarie.nom = 'CURIE' AND eMarie.prenom = 'MARIE' 	
-	AND n.etudiant = eMarie.id 			-- Retrieve Marie's notes
-	AND ePierre.nom = 'CURIE' AND ePierre.prenom = 'Pierre';	-- Retrieve Pierre's ID	
-	
+	notes n
+	JOIN students eMarie ON eMarie.name = 'CURIE' AND eMarie.first_name = 'Marie' 	-- 1st Join with "students" table to retrieve Marie's notes
+	JOIN students ePierre ON ePierre.name = 'CURIE' AND ePierre.first_name = 'Pierre'	-- 2nd Join with "students" table to retrieve Pierre's ID
+WHERE
+	n.student = eMarie.id 				-- Retrieve Marie's notes
+	AND ePierre.name = 'CURIE' AND ePierre.first_name = 'Pierre';
+
 -- --------------------------------------------------------
 -- #14 Create a view to retrieve all tables with the WHERE clause
 -- --------------------------------------------------------
 -- It's not possible to use SELECT * because it will result in column name duplication (e.g., column "id").
--- The view returns no results because the addresses table is empty. The WHERE clause enforces an equijoin.
+-- The view returns no results for empty tables. The WHERE clause enforces the equijoin.
+
+-- --------------------------------------------------------
+-- #14 Create a view to retrieve all tables with the WHERE clause
+-- --------------------------------------------------------
+-- It's not possible to use SELECT * because it will result in column name duplication (e.g., column "id").
+-- The view returns no results for empty tables. The WHERE clause enforces the equijoin.
 
 CREATE VIEW vue_etudiants_where AS
 	SELECT 
 		e.id 		as 'etudiant_id',
-		e.nom		as 'etudiant_nom',
-		e.prenom	as 'etudiant_prenom',
+		e.name		as 'etudiant_nom',
+		e.first_name	as 'etudiant_prenom',
 		e.age		as 'etudiant_age',
 		a.id		as 'adresse_id',
-		a.adresse	as 'adresse_adresse',
-		a.ville 	as 'adresse_ville',
-		a.codepostal as 'adresse_codepostal',
-		a.etudiant 	as 'adresse_etudiant',
+		a.address	as 'adresse_adresse',
+		a.city 	as 'adresse_ville',
+		a.postal_code as 'adresse_codepostal',
+		a.student 	as 'adresse_etudiant',
 		n.id		as 'note_id',
-		n.etudiant	as 'note_etudiant',
-		n.note		as 'note_note',
-		n.matiere	as 'note_matiere',
+		n.student	as 'note_etudiant',
+		n.grade		as 'note_note',
+		n.subject	as 'note_matiere',
 		nm.id		as 'notes_matiere_id',
-		nm.titre	as 'notes_matiere_titre',
+		nm.title	as 'notes_matiere_titre',
 		t.id		as 'telephone_id',
-		t.numero	as 'telephone_numero',
+		t.number	as 'telephone_numero',
 		t.type		as 'telephone_type',
-		t.etudiant	as 'telephone_etudiant',
+		t.student	as 'telephone_etudiant',
 		tt.id		as 'telephone_type_id',
-		tt.libelle	as 'telephone_type_libelle'
+		tt.label	as 'telephone_type_libelle'
 	FROM
-		etudiants e,
-		adresses a,
-		notes n,
-		notes_matieres nm,
-		telephones t,
-		telephones_type tt
-	WHERE
-			e.id = a.etudiant		-- Join etudiants and adresses tables
-		AND	e.id = n.etudiant		-- Join etudiants and notes tables
-		AND e.id = t.etudiant		-- Join etudiants and telephones tables
-		AND n.matiere = nm.id		-- Join notes and notes_matieres tables
-		AND t.type = tt.id			-- Join telephones and telephones_type tables
-	;		
-
--- --------------------------------------------------------
--- #15 Create a view to retrieve all tables with the LEFT JOIN clause
--- --------------------------------------------------------
--- The view returns NULL results for empty tables
-
-CREATE VIEW vue_etudiants_leftjoin AS
-	SELECT 
-		e.id 		as 'etudiant_id',
-		e.nom		as 'etudiant_nom',
-		e.prenom	as 'etudiant_prenom',
-		e.age		as 'etudiant_age',
-		a.id		as 'adresse_id',
-		a.adresse	as 'adresse_adresse',
-		a.ville 	as 'adresse_ville',
-		a.codepostal as 'adresse_codepostal',
-		a.etudiant 	as 'adresse_etudiant',
-		n.id		as 'note_id',
-		n.etudiant	as 'note_etudiant',
-		n.note		as 'note_note',
-		n.matiere	as 'note_matiere',
-		nm.id		as 'notes_matiere_id',
-		nm.titre	as 'notes_matiere_titre',
-		t.id		as 'telephone_id',
-		t.numero	as 'telephone_numero',
-		t.type		as 'telephone_type',
-		t.etudiant	as 'telephone_etudiant',
-		tt.id		as 'telephone_type_id',
-		tt.libelle	as 'telephone_type_libelle'
-	FROM
-		etudiants e
-		LEFT JOIN adresses a
-			ON e.id = a.etudiant		-- Join etudiants and adresses tables
-		LEFT JOIN notes n
-			ON e.id = n.etudiant		-- Join etudiants and notes tables		
-		LEFT JOIN telephones t
-			ON e.id = t.etudiant		-- Join etudiants and telephones tables
-		LEFT JOIN notes_matieres nm
-			ON n.matiere = nm.id		-- Join notes and notes_matieres tables
-		LEFT JOIN telephones_type tt
-			ON t.type = tt.id			-- Join telephones and telephones_type tables		
-	;	
-	
--- --------------------------------------------------------
--- #16 Create a view to retrieve all tables with the INNER JOIN clause
--- --------------------------------------------------------
--- Same result as the WHERE equijoin
-
-CREATE VIEW vue_etudiants_innerjoin AS
-	SELECT 
-		e.id 		as 'etudiant_id',
-		e.nom		as 'etudiant_nom',
-		e.prenom	as 'etudiant_prenom',
-		e.age		as 'etudiant_age',
-		a.id		as 'adresse_id',
-		a.adresse	as 'adresse_adresse',
-		a.ville 	as 'adresse_ville',
-		a.codepostal as 'adresse_codepostal',
-		a.etudiant 	as 'adresse_etudiant',
-		n.id		as 'note_id',
-		n.etudiant	as 'note_etudiant',
-		n.note		as 'note_note',
-		n.matiere	as 'note_matiere',
-		nm.id		as 'notes_matiere_id',
-		nm.titre	as 'notes_matiere_titre',
-		t.id		as 'telephone_id',
-		t.numero	as 'telephone_numero',
-		t.type		as 'telephone_type',
-		t.etudiant	as 'telephone_etudiant',
-		tt.id		as 'telephone_type_id',
-		tt.libelle	as 'telephone_type_libelle'
-	FROM
-		etudiants e
-		INNER JOIN adresses a
-			ON e.id = a.etudiant		-- Join etudiants and adresses tables
-		INNER JOIN notes n
-			ON e.id = n.etudiant		-- Join etudiants and notes tables		
-		INNER JOIN telephones t
-			ON e.id = t.etudiant		-- Join etudiants and telephones tables
-		INNER JOIN notes_matieres nm
-			ON n.matiere = nm.id		-- Join notes and notes_matieres tables
-		INNER JOIN telephones_type tt
-			ON t.type = tt.id			-- Join telephones and telephones_type tables		
+		students e
+		JOIN addresses a
+			ON e.id = a.student		-- Join students and addresses tables
+		JOIN notes n
+			ON e.id = n.student		-- Join students and notes tables
+		JOIN subject_grades nm
+			ON n.subject = nm.id	-- Join notes and subject_grades tables
+		JOIN phones t
+			ON e.id = t.student		-- Join students and phones tables
+		JOIN phone_types tt
+			ON t.type = tt.id		-- Join phones and phone_types tables
 	;
-
--- --------------------------------------------------------
--- #17 Create a view to retrieve only the French notes for each student
--- --------------------------------------------------------
-CREATE VIEW vue_etudiants_notes_francais AS
-	SELECT 
-		e.id 		as 'etudiant_id',
-		e.nom		as 'etudiant_nom',
-		e.prenom	as 'etudiant_prenom',
-		n.note		as 'note',
-		nm.titre	as 'matiere'
-	FROM 
-		etudiants e,
-		notes n,
-		notes_matieres nm
-	WHERE
-			e.id = n.etudiant 		-- Join etudiants and notes tables
-		AND n.matiere = nm.id		-- Join notes and notes_matieres tables
-		AND nm.titre = 'Francais'	-- Filter for the subject "Francais"
-	;
-
--- --------------------------------------------------------
--- #18 Create a view to retrieve only the Math notes less than 12 for each student
--- --------------------------------------------------------
-CREATE VIEW vue_etudiants_notes_maths_inf_12 AS
-	SELECT 
-		e.id 		as 'etudiant_id',
-		e.nom		as 'etudiant_nom',
-		e.prenom	as 'etudiant_prenom',
-		n.note		as 'note',
-		nm.titre	as 'matiere'
-	FROM 
-		etudiants e,
-		notes n,
-		notes_matieres nm
-	WHERE
-			e.id = n.etudiant 		-- Join etudiants and notes tables
-		AND n.matiere = nm.id		-- Join notes and notes_matieres tables
-		AND nm.titre = 'Maths'		-- Filter for the subject "Maths"
-	HAVING
-		n.note < 12					-- Filter for notes less than 12
-	;
-
-
--- --------------------------------------------------------
--- #19. Rename the table telephones_type to telephones_types
--- --------------------------------------------------------
-RENAME TABLE telephones_type TO telephones_types;
-
-SHOW TABLES;
-
--- --------------------------------------------------------
--- #20. Delete the records in the table telephones using DELETE statement
--- --------------------------------------------------------
-DELETE FROM telephones;
-
--- --------------------------------------------------------
--- #21. Truncate the table telephones using TRUNCATE statement
--- --------------------------------------------------------
-TRUNCATE TABLE telephones;
