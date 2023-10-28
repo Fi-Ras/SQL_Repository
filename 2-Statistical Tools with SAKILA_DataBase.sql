@@ -5,8 +5,8 @@ To import database in mysql we need to click on:
 
 *Server 
     -> *Data Import 
-        -> *Cocher la deuxième case "Import from Self-Contained File"
-            -> *Préciser le shéma de la base sql
+        -> *Choose the 2nd case "Import from Self-Contained File"
+            -> *Specify sql database schema
 */
 
 /*Now Let us see the data bases*/
