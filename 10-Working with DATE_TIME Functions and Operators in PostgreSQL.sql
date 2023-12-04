@@ -1,9 +1,6 @@
 -- Active: 1686445526786@@127.0.0.1@3306@sakila
 Use sakila;
 
-
-SHOW TABLES;
-
 SELECT f.title, f.rental_duration,
     -- Calculate the number of days rented
     r.return_date - r.rental_date AS days_rented
