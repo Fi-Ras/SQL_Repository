@@ -614,3 +614,223 @@ SELECT measure,
   FROM correlations;
 
 
+-- Count the categories
+-- Select the count of each level of priority
+SELECT priority, COUNT(*)
+  FROM evanston311
+ GROUP BY priority;
+
+
+-- Find values of zip that appear in at least 100 rows
+-- Also get the count of each value
+SELECT DISTINCT zip, COUNT(*)
+  FROM evanston311
+ GROUP BY zip
+HAVING count(*) >=100; 
+
+
+-- Find values of source that appear in at least 100 rows
+-- Also get the count of each value
+SELECT DISTINCT source, COUNT(*)
+  FROM evanston311
+ GROUP BY source
+HAVING count(*) >=100;
+
+SELECT DISTINCT street, COUNT(*)
+  FROM evanston311
+ GROUP BY street
+ ORDER BY count(*) DESC
+LIMIT 5;
+
+
+
+-- Trim digits 0-9, #, /, ., and spaces from the beginning and end of street.
+--Select distinct original street value and the corrected street value.
+--Order the results by the original street value.
+SELECT distinct street,
+       -- Trim off unwanted characters from street
+       trim(street, '#, /, .,0,1,2,3,4,5,6,7,8,9, ') AS cleaned_street
+  FROM evanston311
+ ORDER BY street;
+
+
+
+-- Count rows in evanston311 where the description contains 'trash' or 'garbage' regardless of case.
+SELECT COUNT(*)
+  FROM evanston311
+ -- Where description includes trash or garbage
+ WHERE description ILIKE '%trash%'  
+    OR description ILIKE '%garbage%';
+
+
+-- Select categories containing Trash or Garbage
+SELECT category
+  FROM evanston311
+ -- Where description includes trash or garbage
+ WHERE category LIKE '%Trash%'  
+    OR category LIKE '%Garbage%';
+
+
+-- Count rows where the description includes 'trash' or 'garbage' but the category does not.
+SELECT COUNT(*)
+  FROM evanston311 
+ -- description contains trash or garbage (any case)
+ WHERE (description ILIKE '%trash%'  
+    OR description ILIKE '%garbage%') 
+ -- category does not contain Trash or Garbage
+   AND category NOT LIKE '%Trash%'
+   AND category NOT LIKE '%Garbage%';
+
+
+-- Find the most common categories for rows with a description about trash that don't have a trash-related category.
+SELECT DISTINCT category, COUNT(*)
+  FROM evanston311 
+ WHERE (description ILIKE '%trash%'
+    OR description ILIKE '%garbage%') 
+   AND category NOT LIKE '%Trash%'
+   AND category NOT LIKE '%Garbage%'
+ -- What are you counting?
+ GROUP BY category
+ --- order by most frequent values
+ ORDER BY COUNT DESC
+ LIMIT 10;
+
+
+-- Concatenate house_num, a space, and street
+-- and trim spaces from the start of the result
+SELECT ltrim(concat(house_num, ' ',street)) AS address
+  FROM evanston311;
+
+-- Select the first word of the street value-- Select the first word of the street value
+SELECT split_part(street, ' ', 1) AS street_name, 
+       count(*)
+  FROM evanston311
+ GROUP BY street_name
+ ORDER BY count DESC
+ LIMIT 20;
+
+
+ SELECT CASE WHEN length(description) > 50
+            THEN left(description, 50) || '...'
+       -- otherwise just select description
+       ELSE description
+       END
+  FROM evanston311
+ -- limit to descriptions that start with the word I
+ WHERE description LIKE 'I %'
+ ORDER BY description;
+
+
+
+-- Fill in the command below with the name of the temp table
+DROP TABLE IF EXISTS recode;
+
+-- Create and name the temporary table
+CREATE TEMP TABLE recode AS
+-- Write the select query to generate the table 
+-- with distinct values of category and standardized values
+  SELECT DISTINCT category, 
+         rtrim(split_part(category, '-', 1)) AS standardized
+    -- What table are you selecting the above values from?
+    FROM evanston311;
+
+-- Look at a few values before the next step
+SELECT DISTINCT standardized 
+  FROM recode
+ WHERE standardized LIKE 'Trash%Cart'
+    OR standardized LIKE 'Snow%Removal%';
+
+-- UPDATE standardized values LIKE 'Trash%Cart' to 'Trash Cart'.
+UPDATE recode 
+   SET standardized='Trash Cart' 
+ WHERE standardized LIKE 'Trash%Cart';
+
+-- UPDATE standardized values of 'Snow Removal/Concerns' and 'Snow/Ice/Hazard Removal' to 'Snow Removal'.
+UPDATE recode 
+   SET standardized='Snow Removal' 
+ WHERE standardized LIKE  'Snow%Removal%';
+
+-- Examine effect of updates
+SELECT DISTINCT standardized 
+  FROM recode
+ WHERE standardized LIKE 'Trash%Cart'
+    OR standardized LIKE 'Snow%Removal%';
+
+
+-- Update to group unused/inactive values-- Update to group unused/inactive values
+UPDATE recode 
+   SET standardized='UNUSED' 
+ WHERE standardized IN ('THIS REQUEST IS INACTIVE...Trash Cart', 
+               '(DO NOT USE) Water Bill',
+               'DO NOT USE Trash', 
+               'NO LONGER IN USE');
+
+-- Examine effect of updates
+SELECT DISTINCT standardized 
+  FROM recode
+ ORDER BY standardized;
+
+
+
+
+-- Code from previous step
+DROP TABLE IF EXISTS recode;
+CREATE TEMP TABLE recode AS
+  SELECT DISTINCT category, 
+         rtrim(split_part(category, '-', 1)) AS standardized
+  FROM evanston311;
+UPDATE recode SET standardized='Trash Cart' 
+ WHERE standardized LIKE 'Trash%Cart';
+UPDATE recode SET standardized='Snow Removal' 
+ WHERE standardized LIKE 'Snow%Removal%';
+UPDATE recode SET standardized='UNUSED' 
+ WHERE standardized IN ('THIS REQUEST IS INACTIVE...Trash Cart', 
+               '(DO NOT USE) Water Bill',
+               'DO NOT USE Trash', 'NO LONGER IN USE');
+
+-- Select the recoded categories and the count of each
+SELECT standardized, count(*)
+-- From the original table and table with recoded values
+  FROM evanston311 
+       LEFT JOIN recode 
+       -- What column do they have in common?
+       ON evanston311.category = recode.category 
+ -- What do you need to group by to count?
+ GROUP BY standardized
+ -- Display the most common val values first
+ ORDER BY count desc;
+
+
+-- To clear table if it already exists
+DROP TABLE IF EXISTS indicators;
+
+-- Create the indicators temp table
+CREATE TEMP TABLE indicators AS
+  -- Select id
+  SELECT id, 
+         -- Create the email indicator (find @)
+         CAST (description LIKE '%@%' AS integer) AS email,
+         -- Create the phone indicator
+         CAST (description LIKE '%___-___-____%' AS integer) AS phone 
+    -- What table contains the data? 
+    FROM evanston311;
+
+-- Inspect the contents of the new temp table
+SELECT *
+  FROM indicators;
+
+
+--Join the indicators table to evanston311, selecting the proportion of reports including an email or phone grouped by priority.
+--Include adjustments to account for issues arising from integer division.
+-- Select the column you'll group by
+SELECT priority,
+       -- Compute the proportion of rows with each indicator
+       SUM(email) / COUNT(*)::numeric AS email_prop, 
+       SUM(phone)/ COUNT(*)::numeric AS phone_prop
+  -- Tables to select from
+  FROM evanston311
+       LEFT JOIN indicators
+       -- Joining condition
+       ON evanston311.id = indicators.id
+ -- What are you grouping by?
+ GROUP BY priority;
