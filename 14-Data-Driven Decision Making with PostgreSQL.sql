@@ -1,6 +1,10 @@
+-- Active: 1702405895474@@127.0.0.1@5432@postgres
+
 -- Create <Movies_data> Database
 DROP DATABASE IF EXISTS Movies_data;
 CREATE DATABASE Movies_data;
+
+CONNECT Movies_data;
 
 -- Create tables and insert data
 DROP TABLE IF EXISTS "movies";
@@ -18,6 +22,7 @@ COPY movies
 	FROM PROGRAM 'curl "https://assets.datacamp.com/production/repositories/4068/datasets/3eebf2a145b76fee37357bcd55ac54577c03c805/movies_181127_2.csv"' (DELIMITER ',', FORMAT CSV, HEADER);
 
 SELECT * FROM movies;
+
 
 
 DROP TABLE IF EXISTS "actors";
@@ -395,4 +400,262 @@ LEFT JOIN movies AS m
 ON m.movie_id = r.movie_id
 WHERE date_renting >= '2019-01-01'
 GROUP BY c.country;
+
+
+---------------------------------------------------------
+--Data Driven Decision Making with advanced SQL queries--
+---------------------------------------------------------
+
+--Select all movie IDs which have more than 5 views
+SELECT movie_id
+FROM renting
+GROUP BY movie_id
+HAVING COUNT(*) > 5;
+
+
+-- Select movie IDs from the inner query
+SELECT *
+FROM movies
+WHERE movie_id IN  
+	(SELECT movie_id
+	FROM renting
+	GROUP BY movie_id
+	HAVING COUNT(*) > 5);
+
+
+-- Select all customers with more than 10 movie rentals
+SELECT *
+FROM customers
+WHERE customer_id IN            
+	(SELECT customer_id
+	FROM renting
+	GROUP BY customer_id
+	HAVING COUNT(*)> 10);
+
+
+-- Calculate the total average rating
+SELECT AVG(rating) 
+FROM renting;
+
+-- Select movie IDs and calculate the average rating of movies with rating above average
+SELECT movie_id, -- Select movie IDs and calculate the average rating 
+       AVG(rating)
+FROM renting
+GROUP BY movie_id
+HAVING AVG(rating) >         -- Of movies with rating above average
+	(SELECT AVG(rating)
+	FROM renting);
+
+
+-- Report the movie titles of all movies with average rating higher than the total average
+SELECT title 
+FROM movies 
+WHERE movie_id in
+	(SELECT movie_id
+	 FROM renting
+     GROUP BY movie_id
+     HAVING AVG(rating) > 
+		(SELECT AVG(rating)
+		 FROM renting));
+
+
+-- Count movie rentals of customer 45
+SELECT COUNT(*)
+FROM renting
+WHERE customer_id = 45;
+
+
+-- Select customers with less than 5 movie rentals
+SELECT *
+FROM customers as c
+WHERE 5 > 
+	(SELECT count(*)
+	FROM renting as r
+	WHERE r.customer_id = c.customer_id);
+
+
+-- Calculate the minimum rating of customer with ID 7
+SELECT min(rating)
+FROM renting AS r
+WHERE r.customer_id = 7;
+
+
+-- Select all customers with a minimum rating smaller than 4
+SELECT *
+FROM customers 	AS c
+WHERE 4 >  
+	(SELECT MIN(rating)
+	FROM renting AS r
+	WHERE r.customer_id = c.customer_id);
+
+
+-- Select all movies with more than 5 ratings
+SELECT *
+FROM movies AS m
+WHERE 5 < 
+	(SELECT count(rating)
+	FROM renting AS r
+	WHERE m.movie_id = r.movie_id);
+
+
+-- Select all movies with an average rating higher than 8
+SELECT *
+FROM movies AS m
+WHERE 8 < 
+	(SELECT AVG(rating)
+	FROM renting AS r
+	WHERE r.movie_id = m.movie_id);
+
+
+-- Select all records of movie rentals from customer with ID 115
+SELECT *
+FROM renting AS r
+WHERE r.customer_id = 115;
+
+
+-- Exclude those with null ratings
+SELECT *
+FROM renting
+WHERE rating IS NOT NULL 
+AND customer_id = 115;
+
+
+-- Select all records of movie rentals from the customer with ID 1, excluding null ratings
+SELECT *
+FROM renting
+WHERE rating IS NOT NULL
+AND customer_id = 1; 
+
+-- Select all customers with at least one rating
+SELECT *
+FROM customers AS c 
+WHERE EXISTS
+	(SELECT *
+	FROM renting AS r
+	WHERE rating IS NOT NULL 
+	AND r.customer_id = c.customer_id);
+
+
+-- Select the records from the table `actsin` of all actors who play in a Comedy
+SELECT *  
+FROM actsin AS ai
+LEFT JOIN movies AS m
+ON ai.movie_id = m.movie_id
+WHERE m.genre = 'Comedy';
+
+
+-- Make a table of the records of actors who play in a Comedy and select only the actor with ID 1
+SELECT *
+FROM actsin AS ai
+LEFT JOIN movies AS m
+ON m.movie_id = ai.movie_id
+WHERE m.genre = 'Comedy'
+AND ai.actor_id = 1;
+
+
+-- Create a list of all actors who play in a Comedy. Use the first letter of the table as an alias
+SELECT *
+FROM actors AS a 
+WHERE EXISTS
+	(SELECT *
+	 FROM actsin AS ai
+	 LEFT JOIN movies AS m
+	 ON m.movie_id = ai.movie_id
+	 WHERE m.genre = 'Comedy'
+	 AND ai.actor_id = a.actor_id);
+
+
+-- Report the nationality and the number of actors for each nationality
+SELECT a.nationality, COUNT(*)
+FROM actors AS a
+WHERE EXISTS
+	(SELECT ai.actor_id
+	 FROM actsin AS ai
+	 LEFT JOIN movies AS m
+	 ON m.movie_id = ai.movie_id
+	 WHERE m.genre = 'Comedy'
+	 AND ai.actor_id = a.actor_id)
+GROUP BY a.nationality;
+
+
+-- Report the name, nationality and the year of birth of all actors who are not from the USA
+SELECT name, 
+       nationality, 
+       year_of_birth
+FROM actors
+WHERE nationality <> 'USA';
+
+
+-- Report the name, nationality and the year of birth of all actors who were born after 1990
+SELECT name, 
+       nationality, 
+       year_of_birth
+FROM actors
+WHERE year_of_birth > 1990;
+
+
+-- Select all actors who are not from the USA and "all actors" who are born after 1990
+SELECT name, 
+       nationality, 
+       year_of_birth
+FROM actors
+WHERE nationality <> 'USA'
+UNION 
+SELECT name, 
+       nationality, 
+       year_of_birth
+FROM actors
+WHERE year_of_birth > 1990;
+
+
+-- Select all actors who are not from the USA and "who are also" born after 1990
+SELECT name, 
+       nationality, 
+       year_of_birth
+FROM actors
+WHERE nationality <> 'USA'
+INTERSECT 
+SELECT name, 
+       nationality, 
+       year_of_birth
+FROM actors
+WHERE year_of_birth > 1990;
+
+
+-- Select the IDs of all dramas
+SELECT movie_id 
+FROM movies
+WHERE genre = 'Drama';
+
+
+-- Select the IDs of all movies with average rating higher than 9
+SELECT movie_id 
+FROM renting
+GROUP BY movie_id
+HAVING AVG(rating) > 9;
+
+
+-- Select the IDs of all dramas with average rating higher than 9
+SELECT movie_id
+FROM movies
+WHERE genre = 'Drama'
+INTERSECT  
+SELECT movie_id
+FROM renting
+GROUP BY movie_id
+HAVING AVG(rating)>9;
+
+
+-- Select all movies of genre drama with average rating higher than 9
+SELECT *
+FROM movies
+WHERE movie_id IN 
+   (SELECT movie_id
+    FROM movies
+    WHERE genre = 'Drama'
+    INTERSECT
+    SELECT movie_id
+    FROM renting
+    GROUP BY movie_id
+    HAVING AVG(rating)>9);
 
